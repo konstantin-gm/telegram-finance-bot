@@ -19,12 +19,13 @@ API_TOKEN = os.getenv("TELEGRAM_API_TOKEN")
 #     login=os.getenv("TELEGRAM_PROXY_LOGIN"),
 #     password=os.getenv("TELEGRAM_PROXY_PASSWORD")
 # )
-ACCESS_ID = os.getenv("TELEGRAM_ACCESS_ID")
+ACCESS_IDS = str(os.getenv("TELEGRAM_ACCESS_IDS")).split('_')
 
 # bot = Bot(token=API_TOKEN, proxy=PROXY_URL, proxy_auth=PROXY_AUTH)
+
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
-dp.middleware.setup(AccessMiddleware(ACCESS_ID))
+dp.middleware.setup(AccessMiddleware(ACCESS_IDS))
 
 
 @dp.message_handler(commands=['start', 'help'])
@@ -92,7 +93,7 @@ async def list_expenses(message: types.Message):
 async def add_expense(message: types.Message):
     """Добавляет новый расход"""
     try:
-        expense = expenses.add_expense(message.text)
+        expense = expenses.add_expense(message)
     except exceptions.NotCorrectMessage as e:
         await message.answer(str(e))
         return
@@ -102,5 +103,6 @@ async def add_expense(message: types.Message):
     await message.answer(answer_message)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':    
+    print(ACCESS_IDS)
     executor.start_polling(dp, skip_updates=True)

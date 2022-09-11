@@ -2,6 +2,7 @@
 import datetime
 import re
 from typing import List, NamedTuple, Optional
+from aiogram import types
 
 import pytz
 
@@ -23,17 +24,18 @@ class Expense(NamedTuple):
     category_name: str
 
 
-def add_expense(raw_message: str) -> Expense:
+def add_expense(raw_message: types.Message) -> Expense:
     """Добавляет новое сообщение.
     Принимает на вход текст сообщения, пришедшего в бот."""
-    parsed_message = _parse_message(raw_message)
+    parsed_message = _parse_message(raw_message.text)
     category = Categories().get_category(
         parsed_message.category_text)
     inserted_row_id = db.insert("expense", {
         "amount": parsed_message.amount,
         "created": _get_now_formatted(),
         "category_codename": category.codename,
-        "raw_text": raw_message
+        "raw_text": raw_message.text,
+        "user": int(raw_message.from_user.id)
     })
     return Expense(id=None,
                    amount=parsed_message.amount,
