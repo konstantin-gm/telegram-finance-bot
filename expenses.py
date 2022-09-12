@@ -56,11 +56,28 @@ def get_today_statistics() -> str:
                    "and category_codename in (select codename "
                    "from category where is_base_expense=true)")
     result = cursor.fetchone()
+    cursor.execute(f"select * "
+                   f"from users")
+    users = cursor.fetchall()    
+    str2 = ""
+    for line in users:
+        cursor.execute(f"select sum(amount) "
+                   f"from expense where date(created)=date('now', 'localtime') "
+                   f"and user == {line[0]}")
+        total_result = cursor.fetchone()
+        cursor.execute(f"select sum(amount) "
+                   f"from expense where date(created)=date('now', 'localtime') "
+                   f"and user == {line[0]} "
+                   f"and category_codename in (select codename "
+                   f"from category where is_base_expense=true)")        
+        base_result = cursor.fetchone()
+        str2 += f"{line[1]} ({total_result[0]}, {base_result[0]})\n"
     base_today_expenses = result[0] if result[0] else 0
-    return (f"Расходы сегодня:\n"
+    ret_str = (f"Расходы сегодня:\n"
             f"всего — {all_today_expenses} руб.\n"
-            f"базовые — {base_today_expenses} руб. из {_get_budget_limit()} руб.\n\n"
-            f"За текущий месяц: /month")
+            f"базовые — {base_today_expenses} руб. из {_get_budget_limit()} руб.\n")
+    ret_str += str2 + "\nЗа текущий месяц: /month"
+    return ret_str
 
 
 def get_month_statistics() -> str:
@@ -79,11 +96,30 @@ def get_month_statistics() -> str:
                    f"and category_codename in (select codename "
                    f"from category where is_base_expense=true)")
     result = cursor.fetchone()
+    cursor.execute(f"select * "
+                   f"from users")
+    users = cursor.fetchall()    
+    str2 = ""
+    for line in users:
+        cursor.execute(f"select sum(amount) "
+                   f"from expense where date(created) >= '{first_day_of_month}' "
+                   f"and user == {line[0]}")
+        total_result = cursor.fetchone()
+        cursor.execute(f"select sum(amount) "
+                   f"from expense where date(created) >= '{first_day_of_month}' "
+                   f"and user == {line[0]} "
+                   f"and category_codename in (select codename "
+                   f"from category where is_base_expense=true)")        
+        base_result = cursor.fetchone()
+        str2 += f"{line[1]} ({total_result[0]}, {base_result[0]})\n"    
     base_today_expenses = result[0] if result[0] else 0
-    return (f"Расходы в текущем месяце:\n"
+    ret_str = (f"Расходы в текущем месяце:\n"
             f"всего — {all_today_expenses} руб.\n"
             f"базовые — {base_today_expenses} руб. из "
-            f"{now.day * _get_budget_limit()} руб.")
+            f"{now.day * _get_budget_limit()} руб."
+            f"\n")
+    ret_str += str2
+    return ret_str
 
 
 def last() -> List[Expense]:
